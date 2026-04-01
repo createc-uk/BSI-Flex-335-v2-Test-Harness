@@ -2,11 +2,9 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UseWindowsForms>true</UseWindowsForms>
-    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <RootNamespace>SapientASMsimulator</RootNamespace>
     <AssemblyName>SapientASMsimulator</AssemblyName>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
@@ -14,6 +12,13 @@
 	  <AssemblyVersion>3352.5.2.4</AssemblyVersion>
 	  <FileVersion>3352.5.2.4</FileVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="ClientForm.cs" />
+    <Compile Remove="ClientForm.Designer.cs" />
+    <Compile Remove="ScriptForm.cs" />
+    <Compile Remove="ScriptForm.Designer.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="Default.Alert.json" />

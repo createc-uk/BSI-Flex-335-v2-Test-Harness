@@ -2,17 +2,35 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UseWindowsForms>true</UseWindowsForms>
-    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <RootNamespace>SapientMiddleware</RootNamespace>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
 	  <AssemblyVersion>3352.5.2.3</AssemblyVersion>
 	  <FileVersion>3352.5.2.3</FileVersion>
 	<VersionPrefix>5.2.3</VersionPrefix>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="LocationOffsetForm.cs" />
+    <Compile Remove="LocationOffsetForm.Designer.cs" />
+    <Compile Remove="ServerForm.cs" />
+    <Compile Remove="ServerForm.Designer.cs" />
+    <Compile Remove="TextForm.cs" />
+    <Compile Remove="TextForm.Designer.cs" />
+    <Compile Remove="StatusIndicator.cs" />
+    <Compile Remove="StatusIndicator.Designer.cs" />
+    <Compile Remove="Properties\Resources.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="LocationOffsetForm.resx" />
+    <EmbeddedResource Remove="ServerForm.resx" />
+    <EmbeddedResource Remove="TextForm.resx" />
+    <EmbeddedResource Remove="StatusIndicator.resx" />
+    <EmbeddedResource Remove="Properties\Resources.resx" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="stylecop.json" />
@@ -36,31 +54,6 @@
     <ProjectReference Include="..\..\SapientServices\SapientServices.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Properties\Resources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Update="Properties\Settings.Designer.cs">
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Update="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
+  
 
 </Project>

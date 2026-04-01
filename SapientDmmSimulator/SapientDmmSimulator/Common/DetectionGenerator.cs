@@ -77,7 +77,7 @@ namespace SapientDmmSimulator.Common
         /// </summary>
         public string ImageURL { get; set; }
 
-        public void GenerateHLDetections(object comms_connection, TaskForm form)
+        public void GenerateHLDetections(object comms_connection)
         {
             var messenger = (IConnection)comms_connection;
 

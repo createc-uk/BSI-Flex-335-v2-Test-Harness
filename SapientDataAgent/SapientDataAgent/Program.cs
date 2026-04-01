@@ -11,9 +11,7 @@ namespace SapientMiddleware
     using System.Collections.Generic;
     using System.Threading;
     using System.Timers;
-    using System.Windows.Forms;
     using log4net;
-    using Microsoft.VisualBasic.Logging;
     using Sapient.Data;
     using SapientDatabase;
     using SapientMiddleware.Common;
@@ -147,11 +145,6 @@ namespace SapientMiddleware
         public static IConnection TaskingCommsConnection { get; private set; }
 
         /// <summary>
-        /// Gets or sets GUI form.
-        /// </summary>
-        private static ServerForm DataAgentForm { get; set; }
-
-        /// <summary>
         /// Gets or sets the task permissions.
         /// </summary>
         private static TaskPermissions TaskPermissions { get; set; }
@@ -183,28 +176,26 @@ namespace SapientMiddleware
         [STAThread]
         public static void Main(string[] args)
         {
-            bool showWindow = Properties.Settings.Default.ShowMainWindow;
-
-            Initialise(showWindow, args);
+            Initialise(args);
 
             heartbeatTimer = new System.Timers.Timer(5000);
             heartbeatTimer.Elapsed += TickHeartbeat;
             heartbeatTimer.Start();
 
-            if (showWindow)
-            {
-                Application.Run(DataAgentForm);
-                taskingComms.Shutdown();
-                ClientComms.Shutdown();
+            StartComms();
 
-                if ((guiPort > 0) && (guiComms != null))
-                {
-                    guiComms.Shutdown();
-                }
-            }
-            else
+            // Block indefinitely — shut down via Ctrl-C or SIGTERM
+            var exitEvent = new ManualResetEventSlim(false);
+            Console.CancelKeyPress += (_, e) => { e.Cancel = true; exitEvent.Set(); };
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => exitEvent.Set();
+            exitEvent.Wait();
+
+            taskingComms.Shutdown();
+            ClientComms.Shutdown();
+
+            if ((guiPort > 0) && (guiComms != null))
             {
-                StartComms();
+                guiComms.Shutdown();
             }
         }
 
@@ -215,7 +206,6 @@ namespace SapientMiddleware
         public static void SetWindowText(string text)
         {
             ConnectionMonitor.SetWindowText(text);
-            DataAgentForm.UIThread(() => DataAgentForm.Text = text);
         }
 
         /// <summary>
@@ -237,13 +227,10 @@ namespace SapientMiddleware
         /// <summary>
         /// Initialises the specified show window.
         /// </summary>
-        /// <param name="showWindow">if set to <c>true</c> [show window].</param>
         /// <param name="args">The arguments.</param>
-        private static void Initialise(bool showWindow, string[] args)
+        private static void Initialise(string[] args)
         {
             isDmm = Properties.Settings.Default.DMM;
-            int windowX;
-            int windowY;
             string databaseServer = Properties.Settings.Default.DatabaseServer;
             string databasePort = Properties.Settings.Default.DatabasePort;
             string databaseName = Properties.Settings.Default.DatabaseName;
@@ -262,9 +249,7 @@ namespace SapientMiddleware
             InitialiseLog4net(logDirectory);
             InitialiseDataLogging(logDirectory);
 
-            CalculateWindowLocation(out windowX, out windowY, args);
-
-            InitialiseStatusMonitoring(databaseServer, databasePort, databaseUser, databasePassword, usingDatabase, showWindow, windowX, windowY);
+            InitialiseStatusMonitoring(databaseServer, databasePort, databaseUser, databasePassword, usingDatabase);
 
             InitialiseClientComms(ClientPort);
 
@@ -440,7 +425,7 @@ namespace SapientMiddleware
                 if (!databaseExists)
                 {
                     Log.ErrorFormat("Shutting Down: Configured to run with database but unable to connect to database server on Host:{0} Port{1}", databaseServer, databasePort);
-                    Application.Exit();
+                    Environment.Exit(1);
                     return;
                 }
             }
@@ -499,10 +484,7 @@ namespace SapientMiddleware
         /// <param name="databaseUser">The database user.</param>
         /// <param name="databasePassword">The database password.</param>
         /// <param name="usingDatabase">if set to <c>true</c> [using database].</param>
-        /// <param name="showWindow">if set to <c>true</c> [show window].</param>
-        /// <param name="windowX">The window x.</param>
-        /// <param name="windowY">The window y.</param>
-        private static void InitialiseStatusMonitoring(string databaseServer, string databasePort, string databaseUser, string databasePassword, bool usingDatabase, bool showWindow, int windowX, int windowY)
+        private static void InitialiseStatusMonitoring(string databaseServer, string databasePort, string databaseUser, string databasePassword, bool usingDatabase)
         {
             LogDatabase = null;
             if (usingDatabase)
@@ -511,19 +493,7 @@ namespace SapientMiddleware
             }
 
             MessageMonitor = new SapientMessageMonitor(LogDatabase);
-
-            if (showWindow)
-            {
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                DataAgentForm = new ServerForm(windowX, windowY, Properties.Settings.Default.ShowTaskWindow, MessageMonitor);
-                ConnectionMonitor = DataAgentForm;
-            }
-            else
-            {
-                DataAgentForm = null;
-                ConnectionMonitor = new SapientConnectionMonitor();
-            }
+            ConnectionMonitor = new SapientConnectionMonitor();
         }
 
         /// <summary>
@@ -561,12 +531,6 @@ namespace SapientMiddleware
 
             bool taskingConnected = taskingComms.IsConnected();
             ConnectionMonitor.SetTaskManagerConnected(taskingConnected);
-
-            // update GUI text
-            if (DataAgentForm != null)
-            {
-                DataAgentForm.UpdateGUI();
-            }
 
             int taskingConnections = 0;
             if (taskingConnected)
@@ -879,59 +843,6 @@ namespace SapientMiddleware
                 }
 
                 sapientLogger = SapientLogger.CreateLogger(logDirectory, logPrefix, Properties.Settings.Default.IncrementIntervalSeconds);
-            }
-        }
-
-        /// <summary>
-        /// Calculates the window location.
-        /// </summary>
-        /// <param name="windowX">The window x.</param>
-        /// <param name="windowY">The window y.</param>
-        /// <param name="args">The arguments.</param>
-        private static void CalculateWindowLocation(out int windowX, out int windowY, string[] args)
-        {
-            windowX = Properties.Settings.Default.WindowX;
-            windowY = Properties.Settings.Default.WindowY;
-
-            if (fixedAsmPortId >= 0)
-            {
-                const int windowWidth = 220;
-                int windowHeight = 500;
-
-                // override layout
-                if (windowY > 0)
-                {
-                    windowHeight = windowY;
-                }
-
-                // For each screen, add the screen properties to a list box.
-                foreach (var screen in System.Windows.Forms.Screen.AllScreens)
-                {
-                    int screenWidth = screen.WorkingArea.Width;
-                    int screenHeight = screen.WorkingArea.Height;
-
-                    int numWindowsX = screenWidth / windowWidth;
-                    int numWindowsY = screenHeight / windowHeight;
-
-                    Log.InfoFormat("screenWidth = {0} num windows = {1}", screenWidth, numWindowsX);
-                    Log.InfoFormat("screenHeight = {0} num windows = {1}", screenHeight, numWindowsY);
-
-                    int x = fixedAsmPortId % numWindowsX;
-                    int y = fixedAsmPortId / numWindowsX;
-
-                    windowX = x * windowWidth;
-                    windowY = y * windowHeight;
-
-                    Log.InfoFormat("Window ID:{0} x:{1} y:{2} windowX:{3} windowY:{4}", fixedAsmPortId, x, y, windowX, windowY);
-                }
-            }
-
-            // override auto calculated gui window location.
-            if (args.Length == 3)
-            {
-                windowX = int.Parse(args[1]);
-                windowY = int.Parse(args[2]);
-                Log.InfoFormat("Command Line Window Location X:{0} Y:{1}", windowX, windowY);
             }
         }
     }

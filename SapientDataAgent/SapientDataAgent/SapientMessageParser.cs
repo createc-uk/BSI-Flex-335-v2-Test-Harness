@@ -10,7 +10,6 @@ namespace SapientMiddleware
 {
     using System.Text;
     using log4net;
-    using Microsoft.VisualBasic.Logging;
     using Sapient.Data;
     using SapientDatabase;
     using SapientServices;

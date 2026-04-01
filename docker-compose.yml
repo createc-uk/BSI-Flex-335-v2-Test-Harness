@@ -1,0 +1,75 @@
+# SAPIENT BSI Flex 335 v2 Test Harness — Docker Compose
+#
+# Runs the full test harness headlessly on Linux / macOS.
+# All build context is the repository root.
+#
+# Usage:
+#   docker compose up --build
+#
+# To run a single ASM against a real DUT instead of the DMM simulator,
+# comment out the dmm-simulator service and point your DUT at port 12002.
+
+services:
+
+  # ─── PostgreSQL 12 ────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:12
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sapientBSIFlex335v2
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── Data Agent (middleware hub) ──────────────────────────────────────────
+  data-agent:
+    build:
+      context: .
+      dockerfile: SapientDataAgent/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "14000:14000"   # ASM connections
+      - "14001:14001"   # SDA connections
+      - "12002:12002"   # DMM (HDA tasking)
+      - "12003:12003"   # GUI clients
+    volumes:
+      - data_agent_logs:/app/logs
+
+  # ─── ASM Simulator ────────────────────────────────────────────────────────
+  asm-simulator:
+    build:
+      context: .
+      dockerfile: SapientAsmSimulator/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - data-agent
+    volumes:
+      - asm_logs:/app/logs
+
+  # ─── DMM Simulator ────────────────────────────────────────────────────────
+  dmm-simulator:
+    build:
+      context: .
+      dockerfile: SapientDmmSimulator/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - data-agent
+    volumes:
+      - dmm_logs:/app/logs
+
+volumes:
+  postgres_data:
+  data_agent_logs:
+  asm_logs:
+  dmm_logs:

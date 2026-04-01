@@ -2,11 +2,9 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UseWindowsForms>true</UseWindowsForms>
-    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <RootNamespace>SapientDmmSimulator</RootNamespace>
     <AssemblyName>SapientDmmSimulator</AssemblyName>
 	  <AssemblyVersion>3352.5.2.4</AssemblyVersion>
@@ -129,6 +127,15 @@
     <Content Include="Default.RegistrationAck.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="TaskForm.cs" />
+    <Compile Remove="TaskForm.Designer.cs" />
+    <Compile Remove="PTZForm.cs" />
+    <Compile Remove="PTZForm.Designer.cs" />
+    <Compile Remove="ScriptForm.cs" />
+    <Compile Remove="ScriptForm.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
