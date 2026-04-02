@@ -19,8 +19,10 @@ services:
       POSTGRES_DB: sapientBSIFlex335v2
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
+    # Port 5432 not exposed to host — data-agent reaches postgres via Docker network.
+    # Uncomment the line below if you need direct psql access from the host:
+    # ports:
+    #   - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
